@@ -11,11 +11,19 @@ def main():
 
     sg.theme('DarkAmber')
 
-    layout = [[sg.Text('Select input file and output directory', font=("Sans Serif", 14), justification='center')],
-               [sg.Text('Input File', size=(8, 1), font=("Sans Serif", 12)), sg.Input(), sg.FileBrowse(font=("Sans Serif", 12))],
-               [sg.Text('Output', size=(8, 1), font=("Sans Serif", 12)), sg.Input(), sg.FolderBrowse(font=("Sans Serif", 12))],
-               [sg.Text('Run Mode', size=(8, 1), font=("Sans Serif", 12)), sg.Combo(['Production', 'SB', 'Authorization'], size=(20, 1), font=("Sans Serif", 12))],
-               [sg.Submit(button_color=('white', 'green'), button_text='Run', font=("Sans Serif", 12)), sg.Cancel(button_color=('white', 'red'), button_text='Exit', font=("Sans Serif", 12))]]
+    show_input = True
+    show_output = True
+
+    layout = [[sg.Text('Select input file and output directory', font=("Sans Serif", 14), justification='center')]]
+
+    if show_input:
+        layout.append([sg.Text('Input File', size=(8, 1), font=("Sans Serif", 12)), sg.Input(), sg.FileBrowse(font=("Sans Serif", 12))])
+
+    if show_output:
+        layout.append([sg.Text('Output', size=(8, 1), font=("Sans Serif", 12)), sg.Input(), sg.FolderBrowse(font=("Sans Serif", 12))])
+
+    layout.extend([[sg.Text('Run Mode', size=(8, 1), font=("Sans Serif", 12)), sg.Combo(['Production', 'SB', 'Authorization'], size=(20, 1), font=("Sans Serif", 12))],
+               [sg.Submit(button_color=('white', 'green'), button_text='Run', font=("Sans Serif", 12)), sg.Cancel(button_color=('white', 'red'), button_text='Exit', font=("Sans Serif", 12))]])
 
     window = sg.Window('Script Runner', layout)
 
@@ -23,15 +31,21 @@ def main():
         event, values = window.read()
 
         if event == 'Run':
-            input_file, output_dir, mode = values[0], values[1], values[2]
+            input_file, output_dir, mode = None, None, values[0]
+            if show_input:
+                input_file = values[1]
+            if show_output:
+                output_dir = values[2]
 
-            if not input_file or not output_dir or not mode:
+            if (show_input and not input_file) or (show_output and not output_dir) or not mode:
                 sg.Popup("Please provide all required fields: Input File, Output Folder, and Run Mode.", font=("Sans Serif", 12))
                 continue
 
             with open("../.env", 'a') as env:
-                env.write(f"input_file='{input_file}'\n")
-                env.write(f"output_dir='{output_dir}'\n")
+                if show_input:
+                    env.write(f"input_file='{input_file}'\n")
+                if show_output:
+                    env.write(f"output_dir='{output_dir}'\n")
 
             if mode == "Production":
                 script_path = "src/prod/script.py"
@@ -49,7 +63,7 @@ def main():
                 sg.PopupAnimated(sg.DEFAULT_BASE64_LOADING_GIF, time_between_frames=100)
             sg.PopupAnimated(None)
             window.FindElement('Run').Update(disabled=False)
-            sg.Popup("Script finished running.", font=("Sans Serif", 12))
+            sg.Popup("Script finished running", font=("Sans Serif", 12))
             window.close()
             break
 
