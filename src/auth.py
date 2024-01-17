@@ -13,16 +13,16 @@ def csmsso_auth(driver):
 
     # Write username and password to the .env file
     with open("../.env", 'a') as env:
-        env.write(f"MINES_SSO_USERNAME='{username}'\n")
-        env.write(f"MINES_SSO_PASSWORD='{password}'\n")
+        env.write(f"MINES_SSO_USERNAME='{MINES_SSO_USERNAME}'\n")
+        env.write(f"MINES_SSO_PASSWORD='{MINES_SSO_PASSWORD}'\n")
 
     try:
         driver.get('https://my.mines.edu/')
         wait = WebDriverWait(driver, 20, poll_frequency=0.5)
-        wait.until(EC.presence_of_element_located((By.ID, 'input28'))).send_keys(username)
+        wait.until(EC.presence_of_element_located((By.ID, 'input28'))).send_keys(MINES_SSO_USERNAME)
         driver.find_element(by=By.CLASS_NAME, value="o-form-button-bar").click()
 
-        wait.until(EC.presence_of_element_located((By.ID, 'input59'))).send_keys(password)
+        wait.until(EC.presence_of_element_located((By.ID, 'input59'))).send_keys(MINES_SSO_PASSWORD)
         driver.find_element(by=By.CLASS_NAME, value='o-form-button-bar').click()
 
         wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'o-form-button-bar'))).click()
@@ -40,3 +40,7 @@ def csmsso_auth(driver):
     except Exception as e:
         print(f'Failed to authenticate: {e}')
         return 1
+
+if __name__ == "__main__":
+    driver = webdriver.Chrome()
+    csmsso_auth(driver)
