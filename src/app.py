@@ -12,18 +12,29 @@ def main():
     sg.theme('DarkAmber')
 
     show_input = True
+    input_is_file = True
     show_output = True
+    output_is_file = True
+    show_run_mode = True
 
-    layout = [[sg.Text('Select input file and output directory', font=("Sans Serif", 14), justification='center')]]
+    layout = [[sg.Text('Select input and output', font=("Sans Serif", 14), justification='center')]]
 
     if show_input:
-        layout.append([sg.Text('Input File', size=(8, 1), font=("Sans Serif", 12)), sg.Input(), sg.FileBrowse(font=("Sans Serif", 12))])
+        if input_is_file:
+            layout.append([sg.Text('Input File', size=(8, 1), font=("Sans Serif", 12)), sg.Input(), sg.FileBrowse(font=("Sans Serif", 12))])
+        else:
+            layout.append([sg.Text('Input Directory', size=(8, 1), font=("Sans Serif", 12)), sg.Input(), sg.FolderBrowse(font=("Sans Serif", 12))])
 
     if show_output:
-        layout.append([sg.Text('Output', size=(8, 1), font=("Sans Serif", 12)), sg.Input(), sg.FolderBrowse(font=("Sans Serif", 12))])
+        if output_is_file:
+            layout.append([sg.Text('Output File', size=(8, 1), font=("Sans Serif", 12)), sg.Input(), sg.FileBrowse(font=("Sans Serif", 12))])
+        else:
+            layout.append([sg.Text('Output Directory', size=(8, 1), font=("Sans Serif", 12)), sg.Input(), sg.FolderBrowse(font=("Sans Serif", 12))])
 
-    layout.extend([[sg.Text('Run Mode', size=(8, 1), font=("Sans Serif", 12)), sg.Combo(['Production', 'SB', 'Authorization'], size=(20, 1), font=("Sans Serif", 12))],
-               [sg.Submit(button_color=('white', 'green'), button_text='Run', font=("Sans Serif", 12)), sg.Cancel(button_color=('white', 'red'), button_text='Exit', font=("Sans Serif", 12))]])
+    if show_run_mode:
+        layout.extend([[sg.Text('Run Mode', size=(8, 1), font=("Sans Serif", 12)), sg.Combo(['Production', 'SB', 'Authorization'], size=(20, 1), font=("Sans Serif", 12))]])
+
+    layout.append([sg.Submit(button_color=('white', 'green'), button_text='Run', font=("Sans Serif", 12)), sg.Cancel(button_color=('white', 'red'), button_text='Exit', font=("Sans Serif", 12))])
 
     window = sg.Window('Script Runner', layout)
 
@@ -31,14 +42,16 @@ def main():
         event, values = window.read()
 
         if event == 'Run':
-            input_file, output_dir, mode = None, None, values[0]
+            input_file, output_dir, mode = None, None, None
             if show_input:
                 input_file = values[1]
             if show_output:
                 output_dir = values[2]
+            if show_run_mode:
+                mode = values[0]
 
-            if (show_input and not input_file) or (show_output and not output_dir) or not mode:
-                sg.Popup("Please provide all required fields: Input File, Output Folder, and Run Mode.", font=("Sans Serif", 12))
+            if (show_input and not input_file) or (show_output and not output_dir) or (show_run_mode and not mode):
+                sg.Popup("Please provide all required fields.", font=("Sans Serif", 12))
                 continue
 
             with open("../.env", 'a') as env:
@@ -74,4 +87,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
