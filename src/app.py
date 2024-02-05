@@ -9,12 +9,12 @@ def run_script(script_path):
 def main():
     load_dotenv()
 
-    sg.theme('DarkAmber')
+    sg.theme('DarkBlue')
 
     show_input = True
     input_is_file = True
     show_output = True
-    output_is_file = True
+    output_is_file = False
     show_run_mode = True
 
     layout = [[sg.Text('Select input and output', font=("Sans Serif", 14), justification='center')]]
@@ -42,23 +42,31 @@ def main():
         event, values = window.read()
 
         if event == 'Run':
-            input_file, output_dir, mode = None, None, None
+            input_path, output_path, mode = None, None, None
             if show_input:
-                input_file = values[1]
+                input_path = values[0]
             if show_output:
-                output_dir = values[2]
+                output_path = values[1]
             if show_run_mode:
-                mode = values[0]
+                mode = values[2]
 
-            if (show_input and not input_file) or (show_output and not output_dir) or (show_run_mode and not mode):
+            if (show_input and not input_path) or (show_output and not output_path) or (show_run_mode and not mode):
                 sg.Popup("Please provide all required fields.", font=("Sans Serif", 12))
                 continue
 
             with open("../.env", 'a') as env:
                 if show_input:
-                    env.write(f"input_file='{input_file}'\n")
+                    if input_is_file:
+                        env.write(f"INPUT_FILE={input_path}\n")
+                    else:
+                        env.write(f"INPUT_DIR={input_path}\n")
                 if show_output:
-                    env.write(f"output_dir='{output_dir}'\n")
+                    if output_is_file:
+                        env.write(f"OUTPUT_FILE={output_path}\n")
+                    else:
+                        env.write(f"OUTPUT_DIR={output_path}\n")
+                if show_run_mode:
+                    env.write(f"RUN_MODE={mode}\n")
 
             if mode == "Production":
                 script_path = "src/prod/script.py"
