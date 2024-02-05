@@ -1,4 +1,7 @@
 from dotenv import load_dotenv
+import requests
+from getpass import getpass
+import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -41,6 +44,53 @@ def csmsso_auth(driver):
         print(f'Failed to authenticate: {e}')
         return 1
 
+def tdxapi_auth():
+    load_dotenv()
+
+    BEID = os.getenv('BEID')
+    WEBSERVICEKEY = os.getenv('WEBSERVICEKEY')
+    USERNAME = os.getenv('USERNAME')
+    PASSWORD = os.getenv('PASSWORD')
+    TOKEN = os.getenv('TOKEN')
+
+    if not BEID or not WEBSERVICEKEY or not USERNAME or not PASSWORD or not TOKEN:
+        BEID = input("Enter your Client ID: ")
+        os.system('cls' if os.name == 'nt' else 'clear')
+        WEBSERVICEKEY = getpass(prompt="Enter your Client Secret: ")
+        os.system('cls' if os.name == 'nt' else 'clear')
+        USERNAME = input("Enter your Username: ")
+        os.system('cls' if os.name == 'nt' else 'clear')
+        PASSWORD = getpass(prompt="Enter your Password: ")
+        os.system('cls' if os.name == 'nt' else 'clear')
+        TOKEN = getpass(prompt="Enter your Token: ")
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+        # Write Client ID, Client Secret, Username, Password and Token to the .env file
+        with open("../.env", 'a') as env:
+            env.write(f"BEID='{BEID}'\n")
+            env.write(f"WEBSERVICEKEY='{WEBSERVICEKEY}'\n")
+            env.write(f"USERNAME='{USERNAME}'\n")
+            env.write(f"PASSWORD='{PASSWORD}'\n")
+            env.write(f"TOKEN='{TOKEN}'\n")
+
+    # Basic API Authorization
+    url = "https://helpcenter.mines.edu/SBTDWebApi/api/auth/login"
+    data = {}
+    headers = {
+        'client_id': BEID,
+        'client_secret': WEBSERVICEKEY,
+        'username': USERNAME,
+        'password': PASSWORD,
+    }
+
+    response = requests.request("POST", url, headers=headers, data=data)
+
+    if response.status_code == 200:
+        print('Successfully authenticated')
+        return 0
+    else:
+        print(f'Failed to authenticate: {response.status_code}')
+        return 1
+
 if __name__ == "__main__":
-    driver = webdriver.Chrome()
-    csmsso_auth(driver)
+    tdxapi_auth()
