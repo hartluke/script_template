@@ -1,26 +1,21 @@
 from dotenv import load_dotenv
+import sys
 import threading
 import subprocess
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog, QComboBox, QLineEdit, QMessageBox, QProgressBar
 from PyQt6.QtCore import Qt
-
-def run_script(script_path, progress_callback):
-    process = subprocess.Popen(["python", script_path], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    while True:
-        output = process.stdout.readline()
-        if output == '' and process.poll() is not None:
-            break
-        if output:
-            progress_callback(output.strip())
-    rc = process.poll()
+import subprocess
+import qdarktheme
 
 def main():
     load_dotenv()
 
-    app = QApplication([])
+    app = QApplication(sys.argv)
     window = QMainWindow()
     window.setWindowTitle('Script Runner')
+    window.setFixedWidth(700)
     layout = QVBoxLayout()
+    #qdarktheme.setup_theme()
 
     show_input = True
     input_is_file = True
@@ -83,9 +78,6 @@ def main():
     central_widget.setLayout(layout)
     window.setCentralWidget(central_widget)
 
-    def update_progress_bar(value):
-        progress_bar.setValue(int(value))
-
     def run_script():
         input_path, output_path, mode = None, None, None
         if show_input:
@@ -99,7 +91,7 @@ def main():
             QMessageBox.warning(window, "Warning", "Please provide all required fields.")
             return
 
-        with open("../.env", 'a') as env:
+        with open("../.env", 'w') as env:
             if show_input:
                 if input_is_file:
                     env.write(f"INPUT_FILE={input_path}\n")
@@ -124,12 +116,10 @@ def main():
             return
 
         run_button.setEnabled(False)
-        threading.Thread(target=run_script, args=(script_path, update_progress_bar), daemon=True).start()
-        while threading.active_count() > 1:
-            QApplication.processEvents()
+        process = subprocess.Popen(["python", script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
         run_button.setEnabled(True)
         QMessageBox.information(window, "Information", "Script finished running")
-        window.close()
 
     run_button.clicked.connect(run_script)
     exit_button.clicked.connect(lambda: window.close())
