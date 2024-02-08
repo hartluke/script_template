@@ -2,12 +2,13 @@ from dotenv import load_dotenv
 import sys
 import os
 import subprocess
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog, QComboBox, QLineEdit, QMessageBox, QLabel, QDialog
-from PyQt5.QtGui import QMovie, QIcon
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog, QComboBox, QLineEdit, QMessageBox, QLabel, QDialog, QFrame
+from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QFont
 
 def main():
     load_dotenv()
 
+    # app init
     app = QApplication(sys.argv)
     window = QMainWindow()
     window.setWindowTitle('Script Runner')
@@ -15,17 +16,30 @@ def main():
     layout = QVBoxLayout()
     window.setWindowIcon(QIcon('./assets/logo.png'))
 
+    # styling
+    app.setStyle('fusion')
+    palette = app.palette()
+    palette.setColor(QPalette.Window, QColor("#09396C"))
+    palette.setColor(QPalette.Button, QColor("#879EC3"))
+    palette.setColor(QPalette.WindowText, QColor("#ffffff"))
+    app.setFont(QFont("slab serif", 10, QFont.Bold))
+    app.setPalette(palette)
+
+    # i/o config
     show_input = True
     input_is_file = True
     show_output = True
     output_is_file = False
     show_run_mode = True
 
+    button_font = QFont("slab serif", 9)
+
     if show_input:
         if input_is_file:
             input_label = QLabel('Input File')
             input_field = QLineEdit()
             input_button = QPushButton('Browse')
+            input_button.setFont(button_font)
             input_button.clicked.connect(lambda: input_field.setText(QFileDialog.getOpenFileName()[0]))
             layout.addWidget(input_label)
             layout.addWidget(input_field)
@@ -34,6 +48,7 @@ def main():
             input_label = QLabel('Input Directory')
             input_field = QLineEdit()
             input_button = QPushButton('Browse')
+            input_button.setFont(button_font)
             input_button.clicked.connect(lambda: input_field.setText(QFileDialog.getExistingDirectory()))
             layout.addWidget(input_label)
             layout.addWidget(input_field)
@@ -44,6 +59,7 @@ def main():
             output_label = QLabel('Output File')
             output_field = QLineEdit()
             output_button = QPushButton('Browse')
+            output_button.setFont(button_font)
             output_button.clicked.connect(lambda: output_field.setText(QFileDialog.getOpenFileName()[0]))
             layout.addWidget(output_label)
             layout.addWidget(output_field)
@@ -52,6 +68,7 @@ def main():
             output_label = QLabel('Output Directory')
             output_field = QLineEdit()
             output_button = QPushButton('Browse')
+            output_button.setFont(button_font)
             output_button.clicked.connect(lambda: output_field.setText(QFileDialog.getExistingDirectory()))
             layout.addWidget(output_label)
             layout.addWidget(output_field)
@@ -64,8 +81,18 @@ def main():
         layout.addWidget(mode_label)
         layout.addWidget(mode_combo)
 
+    layout.addSpacing(10)
+    line = QFrame()
+    line.setFrameShape(QFrame.HLine)
+    line.setFrameShadow(QFrame.Sunken)
+    layout.addWidget(line)
+    layout.addSpacing(10)
     run_button = QPushButton('Run')
+    run_button.setFont(button_font)
+    run_button.setStyleSheet("background-color: #21314d; color: #ffffff")
     exit_button = QPushButton('Exit')
+    exit_button.setFont(button_font)
+    exit_button.setStyleSheet("background-color: #cc4628; color: #ffffff")
     layout.addWidget(run_button)
     layout.addWidget(exit_button)
 
