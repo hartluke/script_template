@@ -3,21 +3,20 @@
 from pathlib import Path
 from tqdm import tqdm
 from dotenv import load_dotenv
+from datetime import datetime
+import time
 
 def func():
     load_dotenv()
-    logs = Path("../../logs")
-    logs.mkdir(exist_ok=True)
-    
-    logging.basicConfig(
-        filename=logs / f"{datetime.now().isoformat().replace(':', '_')}.log",
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
 
     try:
         # TODO: implement script
+        for i in range(100):
+            time.sleep(0.2)
         return 0
     except Exception as e:
         print(f'Script failed: {e}')
         return 1
+    
+if __name__ == "__main__":
+    func()

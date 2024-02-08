@@ -1,11 +1,9 @@
 from dotenv import load_dotenv
 import sys
-import threading
+import os
 import subprocess
-from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog, QComboBox, QLineEdit, QMessageBox, QProgressBar
-from PyQt6.QtCore import Qt
-import subprocess
-import qdarktheme
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog, QComboBox, QLineEdit, QMessageBox, QLabel
+from PyQt5.QtGui import QMovie, QIcon
 
 def main():
     load_dotenv()
@@ -15,7 +13,7 @@ def main():
     window.setWindowTitle('Script Runner')
     window.setFixedWidth(700)
     layout = QVBoxLayout()
-    #qdarktheme.setup_theme()
+    window.setWindowIcon(QIcon(os.path.join(os.getcwd(), '/assets/logo.png')))
 
     show_input = True
     input_is_file = True
@@ -71,8 +69,10 @@ def main():
     layout.addWidget(run_button)
     layout.addWidget(exit_button)
 
-    progress_bar = QProgressBar()
-    layout.addWidget(progress_bar)
+    loading_gif = QMovie(os.path.join(os.getcwd(), "/assets/pacman-loading.gif"))
+    loading_label = QLabel()
+    loading_label.setMovie(loading_gif)
+    layout.addWidget(loading_label)
 
     central_widget = QWidget()
     central_widget.setLayout(layout)
@@ -116,8 +116,10 @@ def main():
             return
 
         run_button.setEnabled(False)
+        loading_gif.start()
         process = subprocess.Popen(["python", script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
+        loading_gif.stop()
         run_button.setEnabled(True)
         QMessageBox.information(window, "Information", "Script finished running")
 
