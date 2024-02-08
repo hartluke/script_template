@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import sys
 import os
 import subprocess
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog, QComboBox, QLineEdit, QMessageBox, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog, QComboBox, QLineEdit, QMessageBox, QLabel, QDialog
 from PyQt5.QtGui import QMovie, QIcon
 
 def main():
@@ -13,7 +13,7 @@ def main():
     window.setWindowTitle('Script Runner')
     window.setFixedWidth(700)
     layout = QVBoxLayout()
-    window.setWindowIcon(QIcon(os.path.join(os.getcwd(), '/assets/logo.png')))
+    window.setWindowIcon(QIcon('./assets/logo.png'))
 
     show_input = True
     input_is_file = True
@@ -69,10 +69,12 @@ def main():
     layout.addWidget(run_button)
     layout.addWidget(exit_button)
 
-    loading_gif = QMovie(os.path.join(os.getcwd(), "/assets/pacman-loading.gif"))
-    loading_label = QLabel()
+    loading_gif = QMovie("./assets/pacman-loading.gif")
+    loading_dialog = QDialog(window)
+    loading_label = QLabel(loading_dialog)
     loading_label.setMovie(loading_gif)
-    layout.addWidget(loading_label)
+    loading_dialog.setLayout(QVBoxLayout())
+    loading_dialog.layout().addWidget(loading_label)
 
     central_widget = QWidget()
     central_widget.setLayout(layout)
@@ -116,10 +118,12 @@ def main():
             return
 
         run_button.setEnabled(False)
+        loading_dialog.show()
         loading_gif.start()
         process = subprocess.Popen(["python", script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         loading_gif.stop()
+        loading_dialog.close()
         run_button.setEnabled(True)
         QMessageBox.information(window, "Information", "Script finished running")
 
