@@ -120,7 +120,7 @@ def main():
             QMessageBox.warning(window, "Warning", "Please provide all required fields.")
             return
 
-        with open("../.env", 'w') as env:
+        with open("./.env", 'w') as env:
             if show_input:
                 if input_is_file:
                     env.write(f"INPUT_FILE={input_path}\n")
