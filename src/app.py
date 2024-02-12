@@ -134,7 +134,7 @@ def main():
             if show_run_mode:
                 env.write(f"RUN_MODE={mode}\n")
 
-        if mode == "Production":
+        if mode == "Production" or not show_run_mode:
             script_path = "src/prod/script.py"
         elif mode == "SB":
             script_path = "src/sb/script.py"
