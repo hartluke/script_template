@@ -1,16 +1,13 @@
 # luke hart @ colorado school of mines
 # script template
-from dotenv import load_dotenv
+import time
 
-def func():
-    load_dotenv()
+def main(input, output):
+    # TODO: implement script
+    time.sleep(5)
 
-    try:
-        # TODO: implement script
-        return 0
-    except Exception as e:
-        print(f'Script failed: {e}')
-        return 1
+    return 0
+
     
 if __name__ == "__main__":
-    func()
+    main()

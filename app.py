@@ -1,20 +1,19 @@
-from dotenv import load_dotenv
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog, QComboBox, QLineEdit, QMessageBox, QLabel, QDialog, QFrame
 from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QFont
-from src.prod.script import process_aging_report
+from src.prod.script import main as prod_main
+from src.sb.script import main as sb_main
 
 def main():
-    load_dotenv()
 
     # app init
     app = QApplication(sys.argv)
     window = QMainWindow()
-    window.setWindowTitle('Aging Ticket Report Modifier')
+    window.setWindowTitle('Script Runner')
     window.setFixedWidth(700)
     layout = QVBoxLayout()
-    window.setWindowIcon(QIcon('../assets/logo.png'))
+    window.setWindowIcon(QIcon('./assets/logo.png'))
 
     # styling
     app.setStyle('fusion')
@@ -25,6 +24,20 @@ def main():
     app.setFont(QFont("slab serif", 10, QFont.Bold))
     app.setPalette(palette)
 
+    with open('./assets/info.html', 'r') as file:
+        info_html_content = file.read()
+    info_html = QLabel()
+    info_html.setText(info_html_content)
+    info_html.setWordWrap(True)
+    layout.addWidget(info_html)
+
+    layout.addSpacing(10)
+    line = QFrame()
+    line.setFrameShape(QFrame.HLine)
+    line.setFrameShadow(QFrame.Sunken)
+    layout.addWidget(line)
+    layout.addSpacing(10)
+
     # i/o config
     show_input = True
     input_is_file = True
@@ -33,7 +46,6 @@ def main():
     show_run_mode = False
 
     button_font = QFont("slab serif", 9)
-
     if show_input:
         if input_is_file:
             input_label = QLabel('Input File')
@@ -87,19 +99,23 @@ def main():
     line.setFrameShadow(QFrame.Sunken)
     layout.addWidget(line)
     layout.addSpacing(10)
+
     run_button = QPushButton('Run')
     run_button.setFont(button_font)
     run_button.setStyleSheet("background-color: #21314d; color: #ffffff")
+
     exit_button = QPushButton('Exit')
     exit_button.setFont(button_font)
     exit_button.setStyleSheet("background-color: #cc4628; color: #ffffff")
+
     layout.addWidget(run_button)
     layout.addWidget(exit_button)
 
-    loading_gif = QMovie("../assets/pacman-loading.gif")
+    loading_gif = QMovie("./assets/sample.gif")
     loading_dialog = QDialog(window)
     loading_label = QLabel(loading_dialog)
     loading_label.setMovie(loading_gif)
+    loading_label.setFixedSize(500, 500)
     loading_dialog.setLayout(QVBoxLayout())
     loading_dialog.layout().addWidget(loading_label)
 
@@ -124,11 +140,34 @@ def main():
             run_button.setEnabled(False)
             loading_dialog.show()
             loading_gif.start()
-            process_aging_report(input_path, output_path)
-            loading_gif.stop()
-            loading_dialog.close()
-            run_button.setEnabled(True)
-            QMessageBox.information(window, "Information", "Script finished running")
+            try:
+                prod_main(input_path, output_path)
+                loading_gif.stop()
+                loading_dialog.close()
+                run_button.setEnabled(True)
+                QMessageBox.information(window, "Information", "Script finished running")
+            except Exception as e:
+                loading_gif.stop()
+                loading_dialog.close()
+                run_button.setEnabled(True)
+                QMessageBox.critical(window, "Error", f"Script failed: {str(e)}")
+                return
+        elif mode == "SB":
+            run_button.setEnabled(False)
+            loading_dialog.show()
+            loading_gif.start()
+            try:
+                sb_main(input_path, output_path)
+                loading_gif.stop()
+                loading_dialog.close()
+                run_button.setEnabled(True)
+                QMessageBox.information(window, "Information", "SB script finished running")
+            except Exception as e:
+                loading_gif.stop()
+                loading_dialog.close()
+                run_button.setEnabled(True)
+                QMessageBox.critical(window, "Error", f"SB script failed: {str(e)}")
+                return
 
     run_button.clicked.connect(run_script)
     exit_button.clicked.connect(lambda: window.close())
