@@ -111,7 +111,8 @@ def main():
     layout.addWidget(run_button)
     layout.addWidget(exit_button)
 
-    loading_gif = QMovie("./assets/sample.gif")
+    loading_gif = QMovie("sample.gif")
+
     loading_dialog = QDialog(window)
     loading_label = QLabel(loading_dialog)
     loading_label.setMovie(loading_gif)
