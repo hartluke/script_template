@@ -13,7 +13,7 @@ def main():
     window.setWindowTitle('Script Runner')
     window.setFixedWidth(700)
     layout = QVBoxLayout()
-    window.setWindowIcon(QIcon('./assets/logo.png'))
+    window.setWindowIcon(QIcon('../assets/logo.png'))
 
     # styling
     app.setStyle('fusion')
@@ -24,7 +24,7 @@ def main():
     app.setFont(QFont("slab serif", 10, QFont.Bold))
     app.setPalette(palette)
 
-    with open('./assets/info.html', 'r') as file:
+    with open('../assets/info.html', 'r') as file:
         info_html_content = file.read()
     info_html = QLabel()
     info_html.setText(info_html_content)
@@ -111,7 +111,7 @@ def main():
     layout.addWidget(run_button)
     layout.addWidget(exit_button)
 
-    loading_gif = QMovie("sample.gif")
+    loading_gif = QMovie('../assets/pacman_loading.gif')
 
     loading_dialog = QDialog(window)
     loading_label = QLabel(loading_dialog)
