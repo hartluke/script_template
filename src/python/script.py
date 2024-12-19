@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import time
 
-def main(thread,input, output, dir):
+def main(thread, input, output, dir):
     # Configure logging
     now = pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')
     logging.basicConfig(
