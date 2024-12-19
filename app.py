@@ -1,180 +1,204 @@
-import sys
+import logging
 import os
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog, QComboBox, QLineEdit, QMessageBox, QLabel, QDialog, QFrame
+import pandas as pd
+import sys
+from src.python.script import main as script_main
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel, QFileDialog, QComboBox, QLineEdit, QMessageBox, QLabel, QDialog, QFrame, QInputDialog
 from PyQt5.QtGui import QMovie, QIcon, QPalette, QColor, QFont
-from src.prod.script import main as prod_main
-from src.sb.script import main as sb_main
+from PyQt5.QtCore import QThread, pyqtSignal
 
-def main():
+script_thread = None
 
-    # app init
-    app = QApplication(sys.argv)
-    window = QMainWindow()
-    window.setWindowTitle('Script Runner')
-    window.setFixedWidth(700)
-    layout = QVBoxLayout()
-    window.setWindowIcon(QIcon('../assets/logo.png'))
+class ScriptThread(QThread):
+    finished = pyqtSignal(int)
 
-    # styling
-    app.setStyle('fusion')
-    palette = app.palette()
-    palette.setColor(QPalette.Window, QColor("#09396C"))
-    palette.setColor(QPalette.Button, QColor("#879EC3"))
-    palette.setColor(QPalette.WindowText, QColor("#ffffff"))
-    app.setFont(QFont("slab serif", 10, QFont.Bold))
-    app.setPalette(palette)
+    def __init__(self, script_func, input_path, output_path, dir):
+        super().__init__()
+        self.script_func = script_func
+        self.input_path = input_path
+        self.output_path = output_path
+        self.dir = dir
 
-    with open('../assets/info.html', 'r') as file:
-        info_html_content = file.read()
-    info_html = QLabel()
-    info_html.setText(info_html_content)
-    info_html.setWordWrap(True)
-    layout.addWidget(info_html)
+    def run(self):
+        try:
+            return_code = self.script_func(self, self.input_path, self.output_path, self.dir)
+            self.finished.emit(return_code)
+        except Exception as e:
+            logging.error(f"Error while executing script: {str(e)}")
+            self.finished.emit(1)
+            
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-    layout.addSpacing(10)
-    line = QFrame()
-    line.setFrameShape(QFrame.HLine)
-    line.setFrameShadow(QFrame.Sunken)
-    layout.addWidget(line)
-    layout.addSpacing(10)
-
-    # i/o config
-    show_input = True
-    input_is_file = True
-    show_output = True
-    output_is_file = False
-    show_run_mode = False
-
-    button_font = QFont("slab serif", 9)
-    if show_input:
-        if input_is_file:
-            input_label = QLabel('Input File')
-            input_field = QLineEdit()
-            input_button = QPushButton('Browse')
-            input_button.setFont(button_font)
-            input_button.clicked.connect(lambda: input_field.setText(QFileDialog.getOpenFileName()[0]))
-            layout.addWidget(input_label)
-            layout.addWidget(input_field)
-            layout.addWidget(input_button)
+        if getattr(sys, 'frozen', False):
+            base_path = os.path.dirname(sys.executable)
         else:
-            input_label = QLabel('Input Directory')
-            input_field = QLineEdit()
-            input_button = QPushButton('Browse')
-            input_button.setFont(button_font)
-            input_button.clicked.connect(lambda: input_field.setText(QFileDialog.getExistingDirectory()))
-            layout.addWidget(input_label)
-            layout.addWidget(input_field)
-            layout.addWidget(input_button)
+            base_path = os.path.abspath(__file__)
+        dir = os.path.dirname(base_path)
+        
+        self.setWindowTitle('Script Runner')
+        self.setFixedWidth(700)
+        self.setWindowIcon(QIcon(f'{dir}\\src\\assets\\logo.png'))
+        self.layout = QVBoxLayout()
+        
+        # styling
+        app.setStyle('fusion')
+        palette = app.palette()
+        palette.setColor(QPalette.Window, QColor("#09396C"))
+        palette.setColor(QPalette.Button, QColor("#879EC3"))
+        palette.setColor(QPalette.WindowText, QColor("#ffffff"))
+        app.setFont(QFont("slab serif", 10, QFont.Bold))
+        app.setPalette(palette)
 
-    if show_output:
-        if output_is_file:
-            output_label = QLabel('Output File')
-            output_field = QLineEdit()
-            output_button = QPushButton('Browse')
-            output_button.setFont(button_font)
-            output_button.clicked.connect(lambda: output_field.setText(QFileDialog.getOpenFileName()[0]))
-            layout.addWidget(output_label)
-            layout.addWidget(output_field)
-            layout.addWidget(output_button)
+        # information text at top of app
+        with open(f'{dir}\\src\\assets\\info.html', 'r') as file:
+            info_html_content = file.read()
+        info_html = QLabel()
+        info_html.setText(info_html_content)
+        info_html.setWordWrap(True)
+        self.layout.addWidget(info_html)
+
+        self.layout.addSpacing(10)
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        self.layout.addWidget(line)
+        self.layout.addSpacing(10)
+        
+        # i/o config
+        self.show_input = True
+        self.input_is_file = True
+        self.show_output = True
+        self.output_is_file = False
+
+        button_font = QFont("slab serif", 9)
+        if self.show_input:
+            if self.input_is_file:
+                # Input for Outstanding Charges
+                input_label = QLabel('Input File')
+                self.input_field = QLineEdit()
+                input_button = QPushButton('Browse')
+                input_button.setFont(button_font)
+                input_button.clicked.connect(lambda: self.input_field.setText(QFileDialog.getOpenFileName()[0]))
+                self.layout.addWidget(input_label)
+                self.layout.addWidget(self.input_field)
+                self.layout.addWidget(input_button)
+
+            else:
+                input_label = QLabel('Input Directory')
+                input_field = QLineEdit()
+                input_button = QPushButton('Browse')
+                input_button.setFont(button_font)
+                input_button.clicked.connect(lambda: input_field.setText(QFileDialog.getExistingDirectory()))
+                self.layout.addWidget(input_label)
+                self.layout.addWidget(input_field)
+                self.layout.addWidget(input_button)
+
+        if self.show_output:
+            if self.output_is_file:
+                output_label = QLabel('Output File')
+                output_field = QLineEdit()
+                output_button = QPushButton('Browse')
+                output_button.setFont(button_font)
+                output_button.clicked.connect(lambda: output_field.setText(QFileDialog.getOpenFileName()[0]))
+                self.layout.addWidget(output_label)
+                self.layout.addWidget(output_field)
+                self.layout.addWidget(output_button)
+            else:
+                output_label = QLabel('Log File Output Directory')
+                self.output_field = QLineEdit()
+                output_button = QPushButton('Browse')
+                output_button.setFont(button_font)
+                output_button.clicked.connect(lambda: self.output_field.setText(QFileDialog.getExistingDirectory()))
+                self.layout.addWidget(output_label)
+                self.layout.addWidget(self.output_field)
+                self.layout.addWidget(output_button)
+
+        self.layout.addSpacing(10)
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Sunken)
+        self.layout.addWidget(line)
+        self.layout.addSpacing(10)
+
+        self.run_button = QPushButton('Run')
+        self.run_button.setFont(button_font)
+        self.run_button.setStyleSheet("background-color: #21314d; color: #ffffff")
+
+        exit_button = QPushButton('Exit')
+        exit_button.setFont(button_font)
+        exit_button.setStyleSheet("background-color: #cc4628; color: #ffffff")
+
+        self.layout.addWidget(self.run_button)
+        self.layout.addWidget(exit_button)
+
+        self.loading_gif = QMovie(f'{dir}\\src\\assets\\pacman_loading.gif')
+        self.loading_dialog = QDialog(self)
+        self.loading_dialog.setWindowTitle("Script Running...")
+        loading_label = QLabel(self.loading_dialog)
+        loading_label.setMovie(self.loading_gif)
+        self.loading_dialog.setLayout(QVBoxLayout())
+        self.loading_dialog.layout().addWidget(loading_label)
+
+        central_widget = QWidget()
+        central_widget.setLayout(self.layout)
+        self.setCentralWidget(central_widget)
+        
+        self.run_button.clicked.connect(self.run_script)
+        exit_button.clicked.connect(lambda: self.close())
+        
+        self.script_thread = None
+
+    def run_script(self):
+        if getattr(sys, 'frozen', False):
+            base_path = os.path.dirname(sys.executable)
         else:
-            output_label = QLabel('Output Directory')
-            output_field = QLineEdit()
-            output_button = QPushButton('Browse')
-            output_button.setFont(button_font)
-            output_button.clicked.connect(lambda: output_field.setText(QFileDialog.getExistingDirectory()))
-            layout.addWidget(output_label)
-            layout.addWidget(output_field)
-            layout.addWidget(output_button)
+            base_path = os.path.abspath(__file__)
+        dir = os.path.dirname(base_path)
 
-    if show_run_mode:
-        mode_label = QLabel('Run Mode')
-        mode_combo = QComboBox()
-        mode_combo.addItems(['Production', 'SB', 'Authorization'])
-        layout.addWidget(mode_label)
-        layout.addWidget(mode_combo)
-
-    layout.addSpacing(10)
-    line = QFrame()
-    line.setFrameShape(QFrame.HLine)
-    line.setFrameShadow(QFrame.Sunken)
-    layout.addWidget(line)
-    layout.addSpacing(10)
-
-    run_button = QPushButton('Run')
-    run_button.setFont(button_font)
-    run_button.setStyleSheet("background-color: #21314d; color: #ffffff")
-
-    exit_button = QPushButton('Exit')
-    exit_button.setFont(button_font)
-    exit_button.setStyleSheet("background-color: #cc4628; color: #ffffff")
-
-    layout.addWidget(run_button)
-    layout.addWidget(exit_button)
-
-    loading_gif = QMovie('../assets/pacman_loading.gif')
-
-    loading_dialog = QDialog(window)
-    loading_label = QLabel(loading_dialog)
-    loading_label.setMovie(loading_gif)
-    loading_label.setFixedSize(500, 500)
-    loading_dialog.setLayout(QVBoxLayout())
-    loading_dialog.layout().addWidget(loading_label)
-
-    central_widget = QWidget()
-    central_widget.setLayout(layout)
-    window.setCentralWidget(central_widget)
-
-    def run_script():
-        input_path, output_path, mode = None, None, None
-        if show_input:
-            input_path = input_field.text()
-        if show_output:
-            output_path = output_field.text()
-        if show_run_mode:
-            mode = mode_combo.currentText()
-
-        if (show_input and not input_path) or (show_output and not output_path) or (show_run_mode and not mode):
-            QMessageBox.warning(window, "Warning", "Please provide all required fields.")
+        input_path, output_path = None, None
+        if self.show_input:
+            input_path = self.input_field.text()
+        if self.show_output:
+            output_path = self.output_field.text()
+            
+        if (self.show_input and not input_path) or (self.show_output and not output_path):
+            QMessageBox.warning(self, "Warning", "Please provide all required fields.")
             return
+        
+        # Configure logging
+        now = pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')
+        logging.basicConfig(
+            filename=os.path.join(output_path, f'{now}.log'),  # Log file name
+            level=logging.DEBUG,    # Log level
+            format='%(asctime)s - %(levelname)s - %(message)s',  # Log format
+            datefmt='%Y-%m-%d %H:%M:%S'  # Date format
+        )
 
-        if mode == "Production" or not show_run_mode:
-            run_button.setEnabled(False)
-            loading_dialog.show()
-            loading_gif.start()
-            try:
-                prod_main(input_path, output_path)
-                loading_gif.stop()
-                loading_dialog.close()
-                run_button.setEnabled(True)
-                QMessageBox.information(window, "Information", "Script finished running")
-            except Exception as e:
-                loading_gif.stop()
-                loading_dialog.close()
-                run_button.setEnabled(True)
-                QMessageBox.critical(window, "Error", f"Script failed: {str(e)}")
-                return
-        elif mode == "SB":
-            run_button.setEnabled(False)
-            loading_dialog.show()
-            loading_gif.start()
-            try:
-                sb_main(input_path, output_path)
-                loading_gif.stop()
-                loading_dialog.close()
-                run_button.setEnabled(True)
-                QMessageBox.information(window, "Information", "SB script finished running")
-            except Exception as e:
-                loading_gif.stop()
-                loading_dialog.close()
-                run_button.setEnabled(True)
-                QMessageBox.critical(window, "Error", f"SB script failed: {str(e)}")
-                return
+        try:
+            self.run_button.setEnabled(False)
+            self.loading_dialog.show()
+            self.loading_gif.start()
+            logging.info(f'Running Script: {str(script_main)}')
+            self.script_thread = ScriptThread(script_main, input_path, output_path, dir)
+            self.script_thread.finished.connect(self.script_finished)
+            self.script_thread.start()
+        except Exception as e:
+            logging.error(f'Error while attempting to run script: {str(e)}')
+            
+    def script_finished(self, return_code):
+        self.loading_gif.stop()
+        self.loading_dialog.close()
+        self.run_button.setEnabled(True)
 
-    run_button.clicked.connect(run_script)
-    exit_button.clicked.connect(lambda: window.close())
-
-    window.show()
-    app.exec()
+        if return_code == 0:
+            QMessageBox.information(self, "Information", "Script ran successfully!")
+        else:
+            QMessageBox.critical(self, "Error", "Script finished running with errors")
 
 if __name__ == "__main__":
-    main()
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    app.exec()
